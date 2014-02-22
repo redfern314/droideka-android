@@ -74,6 +74,8 @@
         android:layout_alignBottom="@+id/accelY"
         android:layout_alignParentRight="true"
         android:layout_marginRight="29dp"
+        android:textOff="Rolling"
+		android:textOn="Standing" 
         android:text="ToggleButton" />
 
     <Button

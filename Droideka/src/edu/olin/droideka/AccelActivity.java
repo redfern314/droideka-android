@@ -18,6 +18,10 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.view.Menu;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.View.OnTouchListener;
+import android.widget.Button;
 import android.widget.TextView;
 
 public class AccelActivity extends Activity implements SensorEventListener {
@@ -28,6 +32,8 @@ public class AccelActivity extends Activity implements SensorEventListener {
 	OutputStream droidekaStream = null;
 	private SensorManager mSensorManager = null;
 	private Sensor mAccel = null;
+	
+	private Button btnLaser = null;
 
 	private TextView accelXbox;
 	private TextView accelYbox;
@@ -45,6 +51,14 @@ public class AccelActivity extends Activity implements SensorEventListener {
 	private static final int FORWARD = 0;
 	private static final int BACKWARD = 1;
 	private int direction = FORWARD;
+	
+	private static final int LASERS_OFF = 0;
+	private static final int LASERS_ON = 1;
+	private int lasers = LASERS_OFF;
+	
+	private static final int ROLLING = 0;
+	private static final int STANDING = 1;
+	private int roll = ROLLING;
 	
 	private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
 	    public void onReceive(Context context, Intent intent) {
@@ -160,8 +174,15 @@ public class AccelActivity extends Activity implements SensorEventListener {
 		
 		speedBox.setText("Speed: "+Integer.toString(speed));
 		
+		boolean laserStatus = btnLaser.isPressed();
+		if (laserStatus) {
+			lasers = LASERS_ON;
+		} else {
+			lasers = LASERS_OFF;
+		}
+		
 		// TODO: laser and stand
-		transmitData(speed,turn,direction,0,0);
+		transmitData(speed,turn,direction,lasers,0);
 	}
 	
 	protected void transmitData(int speed, int turn, int direction, int laser, int stand) {
@@ -214,6 +235,8 @@ public class AccelActivity extends Activity implements SensorEventListener {
     @Override
     protected void onStart() {
     	super.onStart();
+    	btnLaser = (Button)findViewById(R.id.btnLaser);
+    	
     	debugBox=(TextView)findViewById(R.id.debugBox); 
     	debugBox.setText("");
     	
