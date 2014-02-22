@@ -13,15 +13,38 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.view.Menu;
 import android.widget.TextView;
 
-public class AccelActivity extends Activity {
+public class AccelActivity extends Activity implements SensorEventListener {
 	private TextView debugBox;
 	private final static int REQUEST_ENABLE_BT = 1;
 	private BluetoothDevice droidekaDevice = null;
 	BluetoothSocket droidekaSocket = null;
 	OutputStream droidekaStream = null;
+	private SensorManager mSensorManager = null;
+	private Sensor mAccel = null;
+
+	private TextView accelXbox;
+	private TextView accelYbox;
+	private TextView accelZbox;
+	
+	private TextView directionBox;
+	private TextView turnBox;
+	private TextView speedBox;
+	
+	private static final int LEFT = 0;
+	private static final int RIGHT = 1;
+	private static final int STRAIGHT = 2;
+	private int turn = STRAIGHT;
+	
+	private static final int FORWARD = 0;
+	private static final int BACKWARD = 1;
+	private int direction = FORWARD;
 	
 	private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
 	    public void onReceive(Context context, Intent intent) {
@@ -56,25 +79,89 @@ public class AccelActivity extends Activity {
 		    droidekaStream = droidekaSocket.getOutputStream();
 		    debugBox.append("DROIDEKA connected!\n");
 		    System.out.println("connected");
-		    while(true) {
-		    	transmitData(0,0,0,1,0);
-		    	System.out.println("transmit");
-		    	try {
-					Thread.sleep(500);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-		    	transmitData(0,0,0,0,0);
-		    	try {
-					Thread.sleep(500);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-		    }
+//		    while(true) {
+//		    	transmitData(0,0,0,1,0);
+//		    	System.out.println("transmit");
+//		    	try {
+//					Thread.sleep(500);
+//				} catch (InterruptedException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+//		    	transmitData(0,0,0,0,0);
+//		    	try {
+//					Thread.sleep(500);
+//				} catch (InterruptedException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+//		    }
 		    //now you can use out to send output via out.write
 		} catch (IOException e) {}
+	}
+	
+	private int scaleAccelToSpeed(float accelVal) {
+		// min accel value: 1
+		// max accel value: 6.5
+		// min speed: 0
+		// max speed: 255
+		
+		// converts the accel value to a float between 0 and 1
+		float normalized = (float) ((accelVal-1)/6.5);
+		
+		// converts the value to a float between 0 and 255
+		float speed = (float) normalized*255;
+				
+		// cast to int and coerce into proper range
+		int speedInt = (int)speed;
+		if (speedInt>255) {
+			speedInt=255;
+		}
+		if (speedInt<0) {
+			speedInt=0;
+		}
+		
+		return speedInt;
+	}
+	
+	public void onSensorChanged(SensorEvent event){
+		float x = event.values[0]; // left/right
+		float y = event.values[1]; // forward/back
+		float z = event.values[2];
+		
+		int speed = 0;
+		
+		accelXbox.setText("Accel X: "+Float.toString(x));
+		accelYbox.setText("Accel Y: "+Float.toString(y));
+		accelZbox.setText("Accel Z: "+Float.toString(z));
+		
+		if (x<-2) {
+			turn = RIGHT;
+			turnBox.setText("right");
+		} else if (x>2) {
+			turn = LEFT;
+			turnBox.setText("left");
+		} else {
+			turn = STRAIGHT;
+			turnBox.setText("straight");
+		}
+		
+		float absY = Math.abs(y);
+		
+		if (y<=-1) {
+			direction = FORWARD;
+			directionBox.setText("forward");
+			speed = scaleAccelToSpeed(absY);
+		} else if (y>=1) {
+			direction = BACKWARD;
+			directionBox.setText("backward");
+			speed = scaleAccelToSpeed(absY);
+		}
+		
+		speedBox.setText("Speed: "+Integer.toString(speed));
+		
+		// TODO: laser and stand
+		transmitData(speed,turn,direction,0,0);
 	}
 	
 	protected void transmitData(int speed, int turn, int direction, int laser, int stand) {
@@ -83,16 +170,10 @@ public class AccelActivity extends Activity {
 		System.out.print(transmitArray);
 		try {
 			droidekaStream.write(transmitArray);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		} catch (IOException e) { } catch (NullPointerException e) {}
 	}
 
 	protected void startBluetooth() {
-		debugBox=(TextView)findViewById(R.id.debugBox); 
-		debugBox.setText("");
-		
 		// Does this phone have bluetooth?
 		BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 		if (mBluetoothAdapter == null) {
@@ -123,12 +204,32 @@ public class AccelActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+    	mAccel = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+    	mSensorManager.registerListener(this,mAccel,SensorManager.SENSOR_DELAY_NORMAL);
+		
         setContentView(R.layout.activity_accel);
     }
     
     @Override
     protected void onStart() {
     	super.onStart();
+    	debugBox=(TextView)findViewById(R.id.debugBox); 
+    	debugBox.setText("");
+    	
+    	accelXbox = (TextView)findViewById(R.id.accelX);
+    	accelYbox = (TextView)findViewById(R.id.accelY);
+    	accelZbox = (TextView)findViewById(R.id.accelZ);
+    	
+    	directionBox = (TextView)findViewById(R.id.directionBox);
+    	turnBox = (TextView)findViewById(R.id.turnBox);
+    	directionBox.setText("forward");
+		turnBox.setText("straight");
+		direction = FORWARD;
+		turn = STRAIGHT;
+		
+		speedBox = (TextView)findViewById(R.id.speedBox);
+		
     	startBluetooth();
     }
     
@@ -150,5 +251,11 @@ public class AccelActivity extends Activity {
         getMenuInflater().inflate(R.menu.accel, menu);
         return true;
     }
+
+	@Override
+	public void onAccuracyChanged(Sensor arg0, int arg1) {
+		// TODO Auto-generated method stub
+		
+	}
     
 }

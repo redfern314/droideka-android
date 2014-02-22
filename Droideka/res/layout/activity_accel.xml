@@ -12,6 +12,76 @@
         android:id="@+id/debugBox"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="" />
+        android:text="debug" />
+
+    <TextView
+        android:id="@+id/accelX"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/debugBox"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="176dp"
+        android:text="Accel X:" />
+
+    <TextView
+        android:id="@+id/accelY"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/accelX"
+        android:layout_alignTop="@+id/accelX"
+        android:layout_marginTop="27dp"
+        android:text="Accel Y:" />
+
+    <TextView
+        android:id="@+id/accelZ"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/accelY"
+        android:layout_below="@+id/accelY"
+        android:layout_marginTop="14dp"
+        android:text="Accel Z:" />
+
+    <TextView
+        android:id="@+id/directionBox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/accelZ"
+        android:layout_below="@+id/accelZ"
+        android:layout_marginTop="32dp"
+        android:text="direction" />
+
+    <TextView
+        android:id="@+id/turnBox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/directionBox"
+        android:layout_below="@+id/directionBox"
+        android:text="turn" />
+
+    <TextView
+        android:id="@+id/speedBox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/turnBox"
+        android:layout_below="@+id/turnBox"
+        android:layout_marginTop="18dp"
+        android:text="Speed: " />
+
+    <ToggleButton
+        android:id="@+id/toggleRolling"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/accelY"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="29dp"
+        android:text="ToggleButton" />
+
+    <Button
+        android:id="@+id/btnLaser"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignRight="@+id/toggleRolling"
+        android:layout_alignTop="@+id/accelZ"
+        android:text="LASER" />
 
 </RelativeLayout>
