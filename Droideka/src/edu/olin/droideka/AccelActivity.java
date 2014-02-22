@@ -23,6 +23,7 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
 public class AccelActivity extends Activity implements SensorEventListener {
 	private TextView debugBox;
@@ -34,10 +35,7 @@ public class AccelActivity extends Activity implements SensorEventListener {
 	private Sensor mAccel = null;
 	
 	private Button btnLaser = null;
-
-	private TextView accelXbox;
-	private TextView accelYbox;
-	private TextView accelZbox;
+	private ToggleButton toggleRolling = null;
 	
 	private TextView directionBox;
 	private TextView turnBox;
@@ -58,7 +56,7 @@ public class AccelActivity extends Activity implements SensorEventListener {
 	
 	private static final int ROLLING = 0;
 	private static final int STANDING = 1;
-	private int roll = ROLLING;
+	private int rolling = ROLLING;
 	
 	private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
 	    public void onReceive(Context context, Intent intent) {
@@ -93,23 +91,6 @@ public class AccelActivity extends Activity implements SensorEventListener {
 		    droidekaStream = droidekaSocket.getOutputStream();
 		    debugBox.append("DROIDEKA connected!\n");
 		    System.out.println("connected");
-//		    while(true) {
-//		    	transmitData(0,0,0,1,0);
-//		    	System.out.println("transmit");
-//		    	try {
-//					Thread.sleep(500);
-//				} catch (InterruptedException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
-//		    	transmitData(0,0,0,0,0);
-//		    	try {
-//					Thread.sleep(500);
-//				} catch (InterruptedException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
-//		    }
 		    //now you can use out to send output via out.write
 		} catch (IOException e) {}
 	}
@@ -145,10 +126,6 @@ public class AccelActivity extends Activity implements SensorEventListener {
 		
 		int speed = 0;
 		
-		accelXbox.setText("Accel X: "+Float.toString(x));
-		accelYbox.setText("Accel Y: "+Float.toString(y));
-		accelZbox.setText("Accel Z: "+Float.toString(z));
-		
 		if (x<-2) {
 			turn = RIGHT;
 			turnBox.setText("right");
@@ -181,14 +158,20 @@ public class AccelActivity extends Activity implements SensorEventListener {
 			lasers = LASERS_OFF;
 		}
 		
-		// TODO: laser and stand
-		transmitData(speed,turn,direction,lasers,0);
+		boolean rollingStatus = toggleRolling.isChecked();
+		if (rollingStatus) {
+			rolling = ROLLING;
+		} else {
+			rolling = STANDING;
+		}
+		
+		transmitData(speed,turn,direction,lasers,rolling);
 	}
 	
 	protected void transmitData(int speed, int turn, int direction, int laser, int stand) {
 		// Q speed(0-255) L/R/C(0/1/2) F/R(0/1) laseroff/laseron(0,1) rolling/standing(0/1)
 		byte[] transmitArray = {'q',(byte)speed,(byte)turn,(byte)direction,(byte)laser,(byte)stand};
-		System.out.print(transmitArray);
+		System.out.println("transmit");
 		try {
 			droidekaStream.write(transmitArray);
 		} catch (IOException e) { } catch (NullPointerException e) {}
@@ -227,7 +210,7 @@ public class AccelActivity extends Activity implements SensorEventListener {
         super.onCreate(savedInstanceState);
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
     	mAccel = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-    	mSensorManager.registerListener(this,mAccel,SensorManager.SENSOR_DELAY_NORMAL);
+    	mSensorManager.registerListener(this,mAccel,100000);
 		
         setContentView(R.layout.activity_accel);
     }
@@ -235,14 +218,17 @@ public class AccelActivity extends Activity implements SensorEventListener {
     @Override
     protected void onStart() {
     	super.onStart();
+    	System.out.print(findViewById(R.id.btnLaser));
     	btnLaser = (Button)findViewById(R.id.btnLaser);
+    	btnLaser.setWidth(250);
+    	btnLaser.setHeight(250);
+    	toggleRolling = (ToggleButton)findViewById(R.id.toggleRolling);
+    	toggleRolling.setChecked(true);
+    	toggleRolling.setWidth(200);
+    	toggleRolling.setHeight(200);
     	
     	debugBox=(TextView)findViewById(R.id.debugBox); 
     	debugBox.setText("");
-    	
-    	accelXbox = (TextView)findViewById(R.id.accelX);
-    	accelYbox = (TextView)findViewById(R.id.accelY);
-    	accelZbox = (TextView)findViewById(R.id.accelZ);
     	
     	directionBox = (TextView)findViewById(R.id.directionBox);
     	turnBox = (TextView)findViewById(R.id.turnBox);
@@ -277,7 +263,6 @@ public class AccelActivity extends Activity implements SensorEventListener {
 
 	@Override
 	public void onAccuracyChanged(Sensor arg0, int arg1) {
-		// TODO Auto-generated method stub
 		
 	}
     
